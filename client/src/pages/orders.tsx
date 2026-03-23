@@ -1,16 +1,14 @@
 import { History, Search, Filter, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const orderHistory = [
-  { id: "ORD-9821", pair: "SOL/USDT", side: "BUY", type: "MARKET", price: "140.50", amount: "15.5", total: "$2,177.75", status: "FILLED", time: "2026-03-23 14:32:11", exchange: "Bitget" },
-  { id: "ORD-9820", pair: "MEME/USDT", side: "BUY", type: "LIMIT", price: "0.00210", amount: "150000", total: "$315.00", status: "FILLED", time: "2026-03-23 14:15:00", exchange: "Bitget" },
-  { id: "ORD-9819", pair: "ETH/USDT", side: "SELL", type: "MARKET", price: "3500.00", amount: "2.5", total: "$8,750.00", status: "FILLED", time: "2026-03-23 13:45:22", exchange: "BTCC" },
-  { id: "ORD-9818", pair: "BTC/USDT", side: "SELL", type: "STOP_LIMIT", price: "64200.00", amount: "0.1", total: "$6,420.00", status: "FILLED", time: "2026-03-22 09:12:45", exchange: "Bitget" },
-  { id: "ORD-9817", pair: "AVAX/USDT", side: "BUY", type: "LIMIT", price: "32.00", amount: "50", total: "$1,600.00", status: "CANCELED", time: "2026-03-22 08:30:00", exchange: "BTCC" },
-  { id: "ORD-9816", pair: "DOGE/USDT", side: "BUY", type: "MARKET", price: "0.15", amount: "10000", total: "$1,500.00", status: "FAILED", time: "2026-03-21 16:45:12", exchange: "Bitget", note: "Insufficient balance" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 export default function Orders() {
+  const { data: orderHistory, isLoading } = useQuery({
+    queryKey: ['/api/orders'],
+    queryFn: api.getOrders
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex justify-between items-center">
@@ -19,7 +17,7 @@ export default function Orders() {
             <History className="w-8 h-8 text-primary" />
             Order History
           </h1>
-          <p className="text-muted-foreground">Complete audit log of all trade executions and attempts.</p>
+          <p className="text-muted-foreground">Complete audit log of all trade executions and attempts from the external router.</p>
         </div>
         
         <div className="flex gap-3">
@@ -56,49 +54,55 @@ export default function Orders() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {orderHistory.map((order) => (
-              <tr key={order.id} className="hover:bg-white/5 transition-colors group">
-                <td className="p-4 font-mono text-sm text-muted-foreground">
-                  {order.id}
-                </td>
-                <td className="p-4 text-sm text-muted-foreground">
-                  {order.time}
-                </td>
-                <td className="p-4">
-                  <div className="font-mono font-bold text-foreground">{order.pair}</div>
-                  <div className="text-xs text-muted-foreground">{order.exchange}</div>
-                </td>
-                <td className="p-4">
-                  <div className={cn(
-                    "text-sm font-bold",
-                    order.side === "BUY" ? "text-success" : "text-destructive"
-                  )}>{order.side}</div>
-                  <div className="text-xs text-muted-foreground">{order.type}</div>
-                </td>
-                <td className="p-4 font-mono text-sm">
-                  ${order.price}
-                </td>
-                <td className="p-4">
-                  <div className="font-mono text-sm">{order.amount}</div>
-                  <div className="text-xs text-muted-foreground font-mono">{order.total}</div>
-                </td>
-                <td className="p-4">
-                  <div className="flex flex-col gap-1 items-start">
-                    <span className={cn(
-                      "px-2 py-1 rounded-md text-xs font-medium border",
-                      order.status === "FILLED" ? "bg-success/10 text-success border-success/30" : 
-                      order.status === "CANCELED" ? "bg-secondary text-muted-foreground border-white/10" :
-                      "bg-destructive/10 text-destructive border-destructive/30"
-                    )}>
-                      {order.status}
-                    </span>
-                    {order.note && (
-                      <span className="text-xs text-destructive">{order.note}</span>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {isLoading ? (
+              <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Loading order history...</td></tr>
+            ) : orderHistory?.length === 0 ? (
+              <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No orders found.</td></tr>
+            ) : (
+              orderHistory?.map((order) => (
+                <tr key={order.id} className="hover:bg-white/5 transition-colors group">
+                  <td className="p-4 font-mono text-sm text-muted-foreground">
+                    {order.id}
+                  </td>
+                  <td className="p-4 text-sm text-muted-foreground">
+                    {order.timestamp}
+                  </td>
+                  <td className="p-4">
+                    <div className="font-mono font-bold text-foreground">{order.pair}</div>
+                    <div className="text-xs text-muted-foreground">{order.exchange}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className={cn(
+                      "text-sm font-bold",
+                      order.side === "BUY" ? "text-success" : "text-destructive"
+                    )}>{order.side}</div>
+                    <div className="text-xs text-muted-foreground">{order.type}</div>
+                  </td>
+                  <td className="p-4 font-mono text-sm">
+                    ${order.price}
+                  </td>
+                  <td className="p-4">
+                    <div className="font-mono text-sm">{order.amount}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{order.total}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={cn(
+                        "px-2 py-1 rounded-md text-xs font-medium border",
+                        order.status === "FILLED" ? "bg-success/10 text-success border-success/30" : 
+                        order.status === "CANCELED" ? "bg-secondary text-muted-foreground border-white/10" :
+                        "bg-destructive/10 text-destructive border-destructive/30"
+                      )}>
+                        {order.status}
+                      </span>
+                      {order.note && (
+                        <span className="text-xs text-destructive">{order.note}</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

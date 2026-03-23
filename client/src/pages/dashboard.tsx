@@ -8,26 +8,12 @@ import {
   ArrowRightLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
-// Mock Data
-const recentSignals = [
-  { id: 1, pair: "SOL/USDT", type: "MOMENTUM", score: 92, action: "BUY", price: "145.23", time: "2 mins ago", status: "EXECUTED" },
-  { id: 2, pair: "MEME/USDT", type: "NEW_LISTING", score: 88, action: "BUY", price: "0.00234", time: "15 mins ago", status: "PENDING_RISK" },
-  { id: 3, pair: "BTC/USDT", type: "MOMENTUM", score: 45, action: "IGNORE", price: "64,230.00", time: "1 hour ago", status: "REJECTED" },
-  { id: 4, pair: "ETH/USDT", type: "VOLATILITY", score: 78, action: "SELL", price: "3,450.10", time: "2 hours ago", status: "EXECUTED" },
-];
-
-const performanceMetrics = [
-  { label: "Total PnL (Paper)", value: "+$4,230.50", trend: "up", percentage: "+12.4%" },
-  { label: "Win Rate", value: "68.5%", trend: "up", percentage: "+2.1%" },
-  { label: "Active Positions", value: "4", trend: "neutral", percentage: "0%" },
-  { label: "Risk Exposure", value: "Low", trend: "down", percentage: "-5%" },
-];
-
-function MetricCard({ metric }: { metric: typeof performanceMetrics[0] }) {
+function MetricCard({ metric }: { metric: any }) {
   return (
     <div className="glass-panel p-6 rounded-xl relative overflow-hidden group">
-      {/* Hover glow effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       
       <div className="relative z-10 flex justify-between items-start">
@@ -52,6 +38,21 @@ function MetricCard({ metric }: { metric: typeof performanceMetrics[0] }) {
 }
 
 export default function Dashboard() {
+  const { data: metrics, isLoading: loadingMetrics } = useQuery({
+    queryKey: ['/api/dashboard/metrics'],
+    queryFn: api.getMetrics
+  });
+
+  const { data: signals, isLoading: loadingSignals } = useQuery({
+    queryKey: ['/api/signals/recent'],
+    queryFn: api.getRecentSignals
+  });
+
+  const { data: alerts, isLoading: loadingAlerts } = useQuery({
+    queryKey: ['/api/system/alerts'],
+    queryFn: api.getSystemAlerts
+  });
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
@@ -59,7 +60,7 @@ export default function Dashboard() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">Market Overview</h1>
-          <p className="text-muted-foreground">Monitoring 42 assets across 2 exchanges.</p>
+          <p className="text-muted-foreground">Monitoring assets via External Backend.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-4 py-2 bg-card border border-white/10 rounded-lg">
@@ -72,9 +73,13 @@ export default function Dashboard() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {performanceMetrics.map((metric, i) => (
-          <MetricCard key={i} metric={metric} />
-        ))}
+        {loadingMetrics ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="glass-panel p-6 rounded-xl h-[104px] animate-pulse"></div>)
+        ) : (
+          metrics?.map((metric, i) => (
+            <MetricCard key={i} metric={metric} />
+          ))
+        )}
       </div>
 
       {/* Main Content Grid */}
@@ -87,9 +92,6 @@ export default function Dashboard() {
               <Zap className="w-5 h-5 text-primary" />
               Live Signal Feed
             </h2>
-            <button className="text-sm text-primary hover:text-primary-foreground hover:bg-primary px-3 py-1 rounded-md transition-colors border border-primary/30">
-              View All Signals
-            </button>
           </div>
           
           <div className="glass-panel rounded-xl border border-white/10 overflow-hidden">
@@ -105,57 +107,61 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {recentSignals.map((signal) => (
-                  <tr key={signal.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="p-4 font-mono font-bold text-foreground">
-                      {signal.pair}
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 rounded-md bg-secondary text-xs font-medium text-muted-foreground">
-                        {signal.type}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-full bg-secondary h-1.5 rounded-full max-w-[50px]">
-                          <div 
-                            className={cn(
-                              "h-1.5 rounded-full",
-                              signal.score > 80 ? "bg-success" : signal.score > 50 ? "bg-warning" : "bg-destructive"
-                            )} 
-                            style={{ width: `${signal.score}%` }}
-                          />
+                {loadingSignals ? (
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading signals...</td></tr>
+                ) : (
+                  signals?.map((signal) => (
+                    <tr key={signal.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="p-4 font-mono font-bold text-foreground">
+                        {signal.pair}
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2 py-1 rounded-md bg-secondary text-xs font-medium text-muted-foreground">
+                          {signal.type}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-full bg-secondary h-1.5 rounded-full max-w-[50px]">
+                            <div 
+                              className={cn(
+                                "h-1.5 rounded-full",
+                                signal.score > 80 ? "bg-success" : signal.score > 50 ? "bg-warning" : "bg-destructive"
+                              )} 
+                              style={{ width: `${signal.score}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-xs">{signal.score}</span>
                         </div>
-                        <span className="font-mono text-xs">{signal.score}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className={cn(
-                        "font-bold text-sm",
-                        signal.action === "BUY" ? "text-success" : 
-                        signal.action === "SELL" ? "text-destructive" : 
-                        "text-muted-foreground"
-                      )}>
-                        {signal.action}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          signal.status === "EXECUTED" ? "bg-success" :
-                          signal.status === "PENDING_RISK" ? "bg-warning animate-pulse" :
-                          "bg-destructive"
-                        )} />
-                        <span className="text-muted-foreground">{signal.status.replace('_', ' ')}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {signal.time}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-4">
+                        <span className={cn(
+                          "font-bold text-sm",
+                          signal.action === "BUY" ? "text-success" : 
+                          signal.action === "SELL" ? "text-destructive" : 
+                          "text-muted-foreground"
+                        )}>
+                          {signal.action}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            signal.status === "EXECUTED" ? "bg-success" :
+                            signal.status === "PENDING_RISK" ? "bg-warning animate-pulse" :
+                            "bg-destructive"
+                          )} />
+                          <span className="text-muted-foreground">{signal.status.replace('_', ' ')}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {signal.timestamp}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -169,23 +175,32 @@ export default function Dashboard() {
           </h2>
           
           <div className="space-y-4">
-            <div className="glass-panel p-4 rounded-xl border border-warning/30 bg-warning/5 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning"></div>
-              <h4 className="font-bold text-warning mb-1">High Volatility Detected</h4>
-              <p className="text-sm text-muted-foreground">Risk controller has temporarily reduced max position size by 20% for SOL/USDT due to abnormal spread.</p>
-            </div>
-            
-            <div className="glass-panel p-4 rounded-xl border border-destructive/30 bg-destructive/5 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive"></div>
-              <h4 className="font-bold text-destructive mb-1">API Rate Limit Warning</h4>
-              <p className="text-sm text-muted-foreground">BTCC adapter approaching rate limit (45/50 req/s). Pausing non-critical syncs.</p>
-            </div>
-            
-            <div className="glass-panel p-4 rounded-xl border border-white/10 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-              <h4 className="font-bold text-primary mb-1">New Listing Detected</h4>
-              <p className="text-sm text-muted-foreground">Possible new asset 'PEPE2' detected on Bitget streams. Scoring in progress...</p>
-            </div>
+            {loadingAlerts ? (
+               <div className="glass-panel p-4 rounded-xl border border-white/10 h-24 animate-pulse"></div>
+            ) : (
+              alerts?.map((alert) => (
+                <div key={alert.id} className={cn(
+                  "glass-panel p-4 rounded-xl border relative overflow-hidden",
+                  alert.level === "warning" ? "border-warning/30 bg-warning/5" :
+                  alert.level === "critical" ? "border-destructive/30 bg-destructive/5" :
+                  "border-white/10"
+                )}>
+                  <div className={cn(
+                    "absolute left-0 top-0 bottom-0 w-1",
+                    alert.level === "warning" ? "bg-warning" :
+                    alert.level === "critical" ? "bg-destructive" :
+                    "bg-primary"
+                  )}></div>
+                  <h4 className={cn(
+                    "font-bold mb-1",
+                    alert.level === "warning" ? "text-warning" :
+                    alert.level === "critical" ? "text-destructive" :
+                    "text-primary"
+                  )}>{alert.title}</h4>
+                  <p className="text-sm text-muted-foreground">{alert.message}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
         

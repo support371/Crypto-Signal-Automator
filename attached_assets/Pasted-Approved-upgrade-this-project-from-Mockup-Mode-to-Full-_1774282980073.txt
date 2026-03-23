@@ -1,0 +1,75 @@
+Approved: upgrade this project from Mockup Mode to Full-Stack.
+
+Build the backend in paper mode only and regenerate the backend around these 6 modules:
+
+1. Listener
+- Generate simulated market events for BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, DOGEUSDT
+- Generate occasional simulated listing candidates
+- Feed events into the scoring pipeline on recurring cycles
+
+2. Scorer
+- Turn events into ranked opportunities
+- Output score, action, symbol, exchange, and thesis
+- Actions should be buy, watch, or ignore
+
+3. Guardian
+- Enforce hard rules:
+  - max risk per trade
+  - max daily loss
+  - max open positions
+- Approve or reject scored opportunities
+- Log reasons for approval or rejection
+
+4. Execution Router
+- Paper trading only
+- Convert approved opportunities into simulated orders, fills, and positions
+- No live trading
+- Bitget and BTCC remain placeholder settings only
+
+5. Audit Store
+- Persist:
+  - events
+  - scores
+  - decisions
+  - orders
+  - fills
+  - settings changes
+  - errors
+- Use lightweight local persistence for now
+
+6. Health API
+- Expose:
+  - module status
+  - metrics
+  - last cycle time
+  - mode
+- Include a manual cycle trigger and automatic recurring cycles
+
+Frontend wiring requirements:
+- Keep the current UI
+- Replace static mock data with backend-driven data
+- Dashboard should show real backend metrics
+- Watchlist should show scored opportunities
+- Positions should show simulated positions
+- Orders should show simulated orders
+- Risk Guardian should show active rules, approvals, rejections, and breaches
+- Exchange Settings should store paper-mode settings for Bitget and BTCC placeholders
+- System Health should show backend/module health
+
+Operating rules:
+- Default everything to paper mode
+- No real exchange execution
+- No withdrawal or live trading logic
+- Make the app runnable end to end as a simulated crypto automation control center
+
+Implementation order:
+1. Full-Stack upgrade
+2. Backend server scaffold
+3. Listener
+4. Scorer
+5. Guardian
+6. Execution Router
+7. Audit Store
+8. Health API
+9. Wire frontend pages to backend
+10. Validate recurring cycles and manual trigger
