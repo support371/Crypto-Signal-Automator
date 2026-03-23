@@ -1,18 +1,32 @@
+import { Layout } from "@/components/layout/Layout";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import Dashboard from "@/pages/dashboard";
+import Watchlist from "@/pages/watchlist";
+import Positions from "@/pages/positions";
+import Orders from "@/pages/orders";
+import RiskGuardian from "@/pages/risk";
+import Settings from "@/pages/settings";
+import Health from "@/pages/health";
 
 function Router() {
   return (
-    <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
-      <Route component={NotFound} />
-    </Switch>
+    <Layout>
+      <Switch>
+        <Route path="/" component={Dashboard}/>
+        <Route path="/watchlist" component={Watchlist}/>
+        <Route path="/positions" component={Positions}/>
+        <Route path="/orders" component={Orders}/>
+        <Route path="/risk" component={RiskGuardian}/>
+        <Route path="/settings" component={Settings}/>
+        <Route path="/health" component={Health}/>
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }
 
