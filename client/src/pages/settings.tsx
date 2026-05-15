@@ -94,6 +94,71 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Binance Settings */}
+        <div className="space-y-4">
+          <div className="glass-panel p-6 rounded-xl border border-primary/30 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4">
+              <span className="px-3 py-1 bg-success/20 text-success text-xs font-mono rounded-full border border-success/30 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                CONNECTED
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-[#FCD535] rounded-lg flex items-center justify-center p-1">
+                {/* Mock Binance Logo */}
+                <div className="font-bold text-[#1E2329] text-[10px]">
+                  Binance
+                </div>
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-bold">Binance Adapter</h2>
+                <p className="text-sm text-muted-foreground">Primary high-volume exchange</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-muted-foreground flex items-center gap-2">
+                  <Shield className="w-4 h-4" /> API Key
+                </label>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    defaultValue="bin_live_k3jb123jh12389123h12" 
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                    readOnly
+                  />
+                  <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <EyeOff className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-muted-foreground flex items-center gap-2">
+                  <Shield className="w-4 h-4" /> API Secret
+                </label>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    defaultValue="************************" 
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-between items-center border-t border-white/10">
+                <p className="text-xs text-muted-foreground">Last sync: 1s ago</p>
+                <button className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-white/5 border border-white/10 rounded-lg transition-colors text-sm">
+                  <Link2 className="w-4 h-4" /> Test Connection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* BTCC Settings */}
         <div className="space-y-4">
           <div className="glass-panel p-6 rounded-xl border border-white/10 relative overflow-hidden opacity-80 hover:opacity-100 transition-opacity">

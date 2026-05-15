@@ -102,6 +102,10 @@ export function Layout({ children }: LayoutProps) {
               Bitget: CONNECTED
             </div>
             <div className="px-3 py-1 rounded-full bg-secondary/80 border border-white/10 text-xs font-mono text-muted-foreground flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
+              Binance: CONNECTED
+            </div>
+            <div className="px-3 py-1 rounded-full bg-secondary/80 border border-white/10 text-xs font-mono text-muted-foreground flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-destructive"></span>
               BTCC: DISCONNECTED
             </div>

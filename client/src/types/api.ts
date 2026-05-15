@@ -14,7 +14,7 @@ export interface Signal {
   price: string;
   timestamp: string;
   status: OrderStatus;
-  exchange: 'Bitget' | 'BTCC';
+  exchange: 'Bitget' | 'BTCC' | 'Binance';
 }
 
 export interface Metric {
