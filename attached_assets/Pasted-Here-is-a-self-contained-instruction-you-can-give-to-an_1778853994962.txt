@@ -1,0 +1,77 @@
+Here is a self‑contained instruction you can give to **any new agent or developer** so they can build this feature without seeing the old site.[1]
+
+***
+
+## High‑level requirement
+
+On the new GEM website, implement a **“Partners & Trustees” section** that shows a **horizontally moving strip of partner/trustee logos and labels**, scrolling smoothly from right to left in an infinite loop.  
+The component must be driven by GEM’s **project description and service lines** (cybersecurity, digital threat monitoring, asset recovery, real estate via Alliance Trust Realty, trust/legal services, investment, quantum financial system, etc.), not by a fixed list of specific brands.[1]
+
+***
+
+## What to build
+
+1. Section structure  
+   - Add a section on the homepage with:  
+     - Title: “Our Trusted Partners & Business Allies”  
+     - Subtitle: “Working with world-class organizations to deliver excellence.”[1]
+   - Place it near the top of the page, close to the hero and core services, so it clearly signals credibility.[1]
+
+2. Component  
+   - Implement a reusable component, for example `PartnersTrusteesCarousel`.  
+   - This component should render a **single horizontal row** of cards. Each card represents a partner or trustee (or a partner “slot” if names are not final yet).
+
+3. Visual pattern and motion  
+   - Layout:  
+     - Cards aligned in one horizontal line inside a container with `overflow: hidden`.  
+     - Each card shows a logo (or placeholder icon), a name, and a short role label, such as:  
+       - “Tier‑1 Cybersecurity Partner”  
+       - “Asset Recovery Trustee”  
+       - “Real Estate Brokerage Alliance”  
+       - “Legal & Trust Services Partner”  
+       - “Quantum Financial Infrastructure Partner”  
+   - Motion:  
+     - The row scrolls **continuously from right to left** (anti‑clockwise) in a smooth, marquee‑style animation.  
+     - The animation loops infinitely, with no visual “jump” at the end.  
+     - On desktop: pause the animation on hover if possible.  
+     - On mobile: keep it moving continuously (no hover).
+
+4. Data‑driven design (no hard‑coded big tech names)  
+   - Do **not** assume partners must be Microsoft Azure, Google Cloud, Cisco, etc.  
+   - Instead, the carousel must be powered by a **data structure inferred from GEM’s project and services** as listed on the current site:  
+     - Cybersecurity  
+     - Threat monitoring  
+     - Asset recovery  
+     - Real estate services via Alliance Trust Realty  
+     - Legal documentation and power of attorney  
+     - Investment portfolio  
+     - Quantum financial system  
+     - Market insights and related advisory services[1]
+   - From these, define partner/trustee items like:  
+     - `name`: either the actual organization name (if known later) or a role‑based placeholder (e.g., “Global Threat Intelligence Partner”).  
+     - `segment`: category such as “Cybersecurity”, “Real Estate”, “Trust & Legal”, “Financial & QFS”.  
+     - `role`: one short phrase tying them to our offering.  
+     - `logo`: image path (can start as a neutral placeholder icon per segment).  
+     - `link`: optional URL to either an internal “Partner Details” page or an external official website.  
+   - The agent should design this so that when GEM later confirms real organizations, you only update this data array; the layout and animation stay the same.
+
+5. Technical behavior and responsiveness  
+   - Continuous animation using either:  
+     - A small, dependency‑light marquee/slider library that supports infinite horizontal looping, or  
+     - Custom CSS keyframes and a duplicated track (list of cards repeated twice) to get a seamless loop.  
+   - Make speed configurable (e.g., 20–40 seconds per full loop) and test for legibility.  
+   - Ensure responsive design:  
+     - On wide screens, multiple cards visible at once.  
+     - On small screens, cards remain readable and the strip still scrolls horizontally inside the viewport.  
+   - The component must be reusable on the dedicated “Partners & Trustees” page, which already exists in the navigation.[1]
+
+***
+
+## Exact instruction you can paste
+
+> “Implement a reusable `PartnersTrusteesCarousel` section on the new GEM website. It should show a single horizontal strip of partner/trustee cards that scroll continuously from right to left in an infinite loop. Use the GEM service lines (cybersecurity, threat monitoring, asset recovery, real estate via Alliance Trust Realty, legal/trust services, investment portfolio, quantum financial system, etc.) as input to define relevant partner/trustee categories and roles, instead of hard‑coding specific brands. Each card in the carousel is driven by a data structure (id, name, segment, role, logo, optional link), so that we can later plug in real organizations without changing the layout. The section title must be ‘Our Trusted Partners & Business Allies’ with subtitle ‘Working with world-class organizations to deliver excellence.’ Place this section near the top of the homepage and ensure the animation is smooth, responsive, and pause‑on‑hover for desktop.”
+
+This way, any new agent or developer who has **never seen the old site** will still understand the pattern and can build it purely from this description plus the service list already visible on the project.[1]
+
+Sources
+[1] Gem Assist Enterprise - Professional Security & Trust Services https://6435d358-41e3-4047-9ec2-c8ed1f4af1c6-00-agexonnx40xt.kirk.replit.dev/

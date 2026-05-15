@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { PartnersTrusteesCarousel } from "@/components/shared/PartnersTrusteesCarousel";
 
 function MetricCard({ metric }: { metric: any }) {
   return (
@@ -81,6 +82,8 @@ export default function Dashboard() {
           ))
         )}
       </div>
+
+      <PartnersTrusteesCarousel />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
