@@ -161,7 +161,7 @@ export default function Settings() {
 
         {/* BTCC Settings */}
         <div className="space-y-4">
-          <div className="glass-panel p-6 rounded-xl border border-white/10 relative overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+          <div className="glass-panel p-6 rounded-xl border border-white/10 relative overflow-hidden transition-opacity">
             <div className="absolute top-0 right-0 p-4">
               <span className="px-3 py-1 bg-secondary text-muted-foreground text-xs font-mono rounded-full border border-white/10 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
@@ -177,7 +177,7 @@ export default function Settings() {
                 </div>
               </div>
               <div>
-                <h2 className="text-xl font-display font-bold text-muted-foreground">BTCC Adapter</h2>
+                <h2 className="text-xl font-display font-bold">BTCC Adapter</h2>
                 <p className="text-sm text-muted-foreground">Secondary fallback exchange</p>
               </div>
             </div>
@@ -188,7 +188,8 @@ export default function Settings() {
                 <input 
                   type="text" 
                   defaultValue="c03205e2-9171-4b61-b56b-71bbba80d42b" 
-                  className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                  readOnly
                 />
               </div>
 
@@ -198,14 +199,16 @@ export default function Settings() {
                   <input 
                     type="password" 
                     defaultValue="f8ecef80-41df-44a9-ac3e-5a937162b3f1" 
-                    className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                    readOnly
                   />
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 rounded-lg transition-colors text-sm font-medium">
-                  <Save className="w-4 h-4" /> Save Configuration
+              <div className="pt-4 flex justify-between items-center border-t border-white/10">
+                <p className="text-xs text-muted-foreground">Last sync: 3s ago</p>
+                <button className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-white/5 border border-white/10 rounded-lg transition-colors text-sm">
+                  <Link2 className="w-4 h-4" /> Test Connection
                 </button>
               </div>
             </div>
