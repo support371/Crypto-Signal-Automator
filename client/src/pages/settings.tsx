@@ -184,21 +184,23 @@ export default function Settings() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-muted-foreground">API Key (Placeholder)</label>
+                <label className="block text-sm font-medium mb-1 text-muted-foreground">API Key</label>
                 <input 
                   type="text" 
-                  placeholder="Enter BTCC API Key" 
-                  className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50"
+                  defaultValue="c03205e2-9171-4b61-b56b-71bbba80d42b" 
+                  className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1 text-muted-foreground">API Secret (Placeholder)</label>
-                <input 
-                  type="password" 
-                  placeholder="Enter BTCC API Secret" 
-                  className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50"
-                />
+                <label className="block text-sm font-medium mb-1 text-muted-foreground">API Secret</label>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    defaultValue="f8ecef80-41df-44a9-ac3e-5a937162b3f1" 
+                    className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-primary/50 text-muted-foreground"
+                  />
+                </div>
               </div>
 
               <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
