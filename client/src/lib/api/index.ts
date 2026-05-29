@@ -1,9 +1,12 @@
 import { Metric, Position, Signal, SystemAlert, Order, SystemLog, ModuleHealth } from "@/types/api";
 
 // This file documents the expected external backend contract.
-// Currently returning mock data, to be replaced with actual fetch calls.
-// Expected Backend Base URL: e.g., https://api.external-backend.com/v1
+// Currently returning mock data. 
+// To connect to your real backend, replace the mock implementations below with:
+// const response = await fetch(`${API_BASE_URL}/dashboard/metrics`);
+// return response.json();
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 const MOCK_DELAY = 500; // Simulate network latency
 
 export const api = {
