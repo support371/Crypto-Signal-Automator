@@ -50,22 +50,22 @@ export function Layout({ children }: LayoutProps) {
           {navItems.map((item) => {
             const isActive = location === item.href;
             return (
-              <Link key={item.href} href={item.href}>
-                <a
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative",
-                    isActive 
-                      ? "bg-primary/10 text-primary border border-primary/20" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent"
-                  )}
-                  data-testid={`nav-link-${item.label.toLowerCase().replace(' ', '-')}`}
-                >
-                  <item.icon className={cn("w-5 h-5 transition-transform", isActive ? "scale-110" : "group-hover:scale-110")} />
-                  <span className="font-medium text-sm">{item.label}</span>
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full shadow-[0_0_8px_hsl(var(--primary))]"></div>
-                  )}
-                </a>
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative",
+                  isActive 
+                    ? "bg-primary/10 text-primary border border-primary/20" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent"
+                )}
+                data-testid={`nav-link-${item.label.toLowerCase().replace(' ', '-')}`}
+              >
+                <item.icon className={cn("w-5 h-5 transition-transform", isActive ? "scale-110" : "group-hover:scale-110")} />
+                <span className="font-medium text-sm">{item.label}</span>
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full shadow-[0_0_8px_hsl(var(--primary))]"></div>
+                )}
               </Link>
             );
           })}
