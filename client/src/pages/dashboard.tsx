@@ -11,6 +11,17 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PartnersTrusteesCarousel } from "@/components/shared/PartnersTrusteesCarousel";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const mockChartData = [
+  { time: '00:00', pnl: 4000, signals: 24 },
+  { time: '04:00', pnl: 4200, signals: 13 },
+  { time: '08:00', pnl: 3900, signals: 45 },
+  { time: '12:00', pnl: 4300, signals: 32 },
+  { time: '16:00', pnl: 4100, signals: 56 },
+  { time: '20:00', pnl: 4600, signals: 28 },
+  { time: '24:00', pnl: 4230, signals: 19 },
+];
 
 function MetricCard({ metric }: { metric: any }) {
   return (
@@ -81,6 +92,36 @@ export default function Dashboard() {
             <MetricCard key={i} metric={metric} />
           ))
         )}
+      </div>
+
+      {/* Performance Chart */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-display font-bold flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            24h Simulated PnL Performance
+          </h2>
+        </div>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={mockChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorPnl" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground)/0.2)" vertical={false} />
+              <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
+              />
+              <Area type="monotone" dataKey="pnl" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorPnl)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <PartnersTrusteesCarousel />
