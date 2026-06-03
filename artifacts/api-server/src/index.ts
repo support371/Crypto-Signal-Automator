@@ -1,5 +1,9 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startListener } from "./modules/listener";
+import { startScorer } from "./modules/scorer";
+import { startGuardian } from "./modules/guardian";
+import { startExecutor } from "./modules/executor";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +26,11 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  startListener();
+  startScorer();
+  startGuardian();
+  startExecutor();
+
+  logger.info("All 6 core modules started (paper-trading mode)");
 });

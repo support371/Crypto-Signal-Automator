@@ -42,8 +42,8 @@ export interface Position {
   pnl: string;
   pnlPercent: string;
   duration: string;
-  status?: 'TAKE_PROFIT' | 'STOP_LOSS'; // For closed positions
-  closePrice?: string; // For closed positions
+  status?: 'TAKE_PROFIT' | 'STOP_LOSS';
+  closePrice?: string;
 }
 
 export interface Order {
@@ -73,4 +73,16 @@ export interface ModuleHealth {
   status: 'ok' | 'warning' | 'error';
   metricValue: string;
   description: string;
+}
+
+export interface WatchlistItem {
+  id: string;
+  pair: string;
+  exchange: string;
+  status: string;
+  price: string;
+  change24h: string;
+  volume: string;
+  trend: 'up' | 'down' | 'neutral';
+  score: number;
 }
