@@ -2,12 +2,14 @@ import { randomUUID } from "crypto";
 import { auditStore, type Signal } from "./auditStore";
 import { getCurrentPrice } from "./listener";
 import { persistSignal } from "./dbRepository";
+import { logger } from "../lib/logger";
 
 const PAIRS = ["SOL/USDT", "ETH/USDT", "BTC/USDT", "AVAX/USDT", "MEME/USDT", "DOGE/USDT"] as const;
 const TYPES = ["MOMENTUM", "NEW_LISTING", "VOLATILITY"] as const;
 const EXCHANGES = ["Bitget", "Bitget", "Bitget", "BTCC"] as const;
 
 const MIN_ACTIONABLE_SCORE = 70;
+let scorerInterval: NodeJS.Timeout | null = null;
 
 function scoreSignal(): Signal {
   const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
@@ -52,33 +54,55 @@ function ageTimestamps() {
 }
 
 export function startScorer() {
-  setInterval(() => {
-    const signal = scoreSignal();
-    auditStore.signals.unshift(signal);
-    if (auditStore.signals.length > 50) auditStore.signals.pop();
+  if (scorerInterval) {
+    logger.warn("Scorer already running");
+    return;
+  }
 
-    ageTimestamps();
+  scorerInterval = setInterval(() => {
+    try {
+      const signal = scoreSignal();
+      auditStore.signals.unshift(signal);
+      if (auditStore.signals.length > 50) auditStore.signals.pop();
 
-    // Persist to DB (best-effort — does not block the loop)
-    void persistSignal({
-      id: signal.id,
-      pair: signal.pair,
-      type: signal.type,
-      score: signal.score,
-      action: signal.action,
-      price: signal.price,
-      status: signal.status,
-      exchange: signal.exchange,
-    });
+      ageTimestamps();
 
-    auditStore.addLog(
-      signal.status === "REJECTED" ? "WARN" : "INFO",
-      "SignalScorer",
-      signal.status === "REJECTED"
-        ? `Signal rejected: ${signal.pair} ${signal.type} score=${signal.score} (below threshold ${MIN_ACTIONABLE_SCORE})`
-        : `Signal queued: ${signal.pair} ${signal.type} score=${signal.score} → ${signal.action} — awaiting risk check`,
-    );
+      // Persist to DB (best-effort — does not block the loop)
+      void persistSignal({
+        id: signal.id,
+        pair: signal.pair,
+        type: signal.type,
+        score: signal.score,
+        action: signal.action,
+        price: signal.price,
+        status: signal.status,
+        exchange: signal.exchange,
+      }).catch((error) => {
+        logger.error({ error }, "Failed to persist signal");
+      });
+
+      auditStore.addLog(
+        signal.status === "REJECTED" ? "WARN" : "INFO",
+        "SignalScorer",
+        signal.status === "REJECTED"
+          ? `Signal rejected: ${signal.pair} ${signal.type} score=${signal.score} (below threshold ${MIN_ACTIONABLE_SCORE})`
+          : `Signal queued: ${signal.pair} ${signal.type} score=${signal.score} → ${signal.action} — awaiting risk check`,
+      );
+    } catch (error) {
+      logger.error({ error }, "Error in scorer tick");
+      auditStore.addLog("ERROR", "SignalScorer", `Scorer error: ${(error as Error).message}`);
+    }
   }, 30_000);
 
   auditStore.addLog("INFO", "SignalScorer", "Signal scorer started — scoring 6 pairs with MOMENTUM/VOLATILITY/NEW_LISTING strategies");
+  logger.info("Scorer module started");
+}
+
+export function stopScorer() {
+  if (scorerInterval) {
+    clearInterval(scorerInterval);
+    scorerInterval = null;
+    logger.info("Scorer module stopped");
+    auditStore.addLog("INFO", "SignalScorer", "Signal scorer stopped");
+  }
 }

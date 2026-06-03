@@ -1,4 +1,5 @@
 import { auditStore } from "./auditStore";
+import { logger } from "../lib/logger";
 
 interface RiskCheckResult {
   passed: boolean;
@@ -9,6 +10,8 @@ const MAX_EXPOSURE_USD = 10_000;
 const MAX_DAILY_DRAWDOWN_PCT = 5;
 const MIN_SCORE_THRESHOLD = 70;
 
+let guardianInterval: NodeJS.Timeout | null = null;
+
 /** Parse a PnL string like "+$73.32" or "-$85.00" into a signed number. */
 function parsePnL(pnl: string): number {
   const magnitude = parseFloat(pnl.replace(/[^0-9.]/g, ""));
@@ -16,42 +19,71 @@ function parsePnL(pnl: string): number {
 }
 
 export function riskCheck(score: number, totalExposureUsd: number): RiskCheckResult {
-  if (score < MIN_SCORE_THRESHOLD) {
-    return { passed: false, reason: `Score ${score} below threshold ${MIN_SCORE_THRESHOLD}` };
+  // Use dynamic settings from auditStore if available
+  const settings = auditStore.riskSettings;
+  const maxExposure = settings?.maxExposure || MAX_EXPOSURE_USD;
+  const minScore = MIN_SCORE_THRESHOLD;
+
+  if (score < minScore) {
+    return { passed: false, reason: `Score ${score} below threshold ${minScore}` };
   }
-  if (totalExposureUsd > MAX_EXPOSURE_USD) {
-    return { passed: false, reason: `Exposure $${totalExposureUsd.toFixed(0)} exceeds max $${MAX_EXPOSURE_USD}` };
+  if (totalExposureUsd > maxExposure) {
+    return { passed: false, reason: `Exposure $${totalExposureUsd.toFixed(0)} exceeds max $${maxExposure}` };
   }
   return { passed: true };
 }
 
 export function startGuardian() {
-  setInterval(() => {
-    const totalExposure = auditStore.activePositions.reduce((sum, p) => {
-      return sum + parseFloat(p.currentPrice) * parseFloat(p.size);
-    }, 0);
+  if (guardianInterval) {
+    logger.warn("Guardian already running");
+    return;
+  }
 
-    const totalPnL = auditStore.activePositions.reduce((sum, p) => {
-      return sum + parsePnL(p.pnl);
-    }, 0);
+  guardianInterval = setInterval(() => {
+    try {
+      const settings = auditStore.riskSettings;
+      const maxExposure = settings?.maxExposure || MAX_EXPOSURE_USD;
+      const maxDrawdown = settings?.maxDailyLoss || MAX_DAILY_DRAWDOWN_PCT;
 
-    const drawdownPct =
-      totalExposure > 0 ? (Math.abs(Math.min(0, totalPnL)) / totalExposure) * 100 : 0;
+      const totalExposure = auditStore.activePositions.reduce((sum, p) => {
+        return sum + parseFloat(p.currentPrice) * parseFloat(p.size);
+      }, 0);
 
-    if (drawdownPct > MAX_DAILY_DRAWDOWN_PCT * 0.6) {
-      auditStore.addLog(
-        "WARN",
-        "RiskGuardian",
-        `Daily drawdown at ${drawdownPct.toFixed(1)}% of ${MAX_DAILY_DRAWDOWN_PCT}% limit`,
-      );
-    }
+      const totalPnL = auditStore.activePositions.reduce((sum, p) => {
+        return sum + parsePnL(p.pnl);
+      }, 0);
 
-    if (totalExposure > MAX_EXPOSURE_USD * 0.8) {
-      auditStore.addLog(
-        "WARN",
-        "RiskGuardian",
-        `Total exposure $${totalExposure.toFixed(0)} approaching limit of $${MAX_EXPOSURE_USD}`,
-      );
+      const drawdownPct =
+        totalExposure > 0 ? (Math.abs(Math.min(0, totalPnL)) / totalExposure) * 100 : 0;
+
+      // Check kill switch
+      if (settings?.enableKillSwitch && (drawdownPct > maxDrawdown || totalExposure > maxExposure)) {
+        auditStore.addLog(
+          "ERROR",
+          "RiskGuardian",
+          `KILL SWITCH TRIGGERED: Drawdown ${drawdownPct.toFixed(1)}% or exposure $${totalExposure.toFixed(0)} exceeded limits`,
+        );
+        // In production, this would close all positions
+      }
+
+      if (drawdownPct > maxDrawdown * 0.6) {
+        auditStore.addLog(
+          "WARN",
+          "RiskGuardian",
+          `Daily drawdown at ${drawdownPct.toFixed(1)}% of ${maxDrawdown}% limit`,
+        );
+      }
+
+      if (totalExposure > maxExposure * 0.8) {
+        auditStore.addLog(
+          "WARN",
+          "RiskGuardian",
+          `Total exposure $${totalExposure.toFixed(0)} approaching limit of $${maxExposure}`,
+        );
+      }
+    } catch (error) {
+      logger.error({ error }, "Error in guardian tick");
+      auditStore.addLog("ERROR", "RiskGuardian", `Guardian error: ${(error as Error).message}`);
     }
   }, 60_000);
 
@@ -60,9 +92,23 @@ export function startGuardian() {
     "RiskGuardian",
     `Loaded global rules. Max exposure=$${MAX_EXPOSURE_USD}, drawdown limit=${MAX_DAILY_DRAWDOWN_PCT}%`,
   );
+  logger.info("Guardian module started");
+}
+
+export function stopGuardian() {
+  if (guardianInterval) {
+    clearInterval(guardianInterval);
+    guardianInterval = null;
+    logger.info("Guardian module stopped");
+    auditStore.addLog("INFO", "RiskGuardian", "Risk guardian stopped");
+  }
 }
 
 export function getGuardianStatus() {
+  const settings = auditStore.riskSettings;
+  const maxExposure = settings?.maxExposure || MAX_EXPOSURE_USD;
+  const maxDrawdown = settings?.maxDailyLoss || MAX_DAILY_DRAWDOWN_PCT;
+
   const totalExposure = auditStore.activePositions.reduce((sum, p) => {
     return sum + parseFloat(p.currentPrice) * parseFloat(p.size);
   }, 0);
@@ -75,8 +121,9 @@ export function getGuardianStatus() {
     totalExposure: totalExposure.toFixed(2),
     totalPnL: (totalPnL >= 0 ? "+" : "") + "$" + Math.abs(totalPnL).toFixed(2),
     activePositions: auditStore.activePositions.length,
-    maxExposure: MAX_EXPOSURE_USD,
-    drawdownLimit: MAX_DAILY_DRAWDOWN_PCT,
+    maxExposure,
+    drawdownLimit: maxDrawdown,
+    killSwitchEnabled: settings?.enableKillSwitch || false,
     status: "ok" as const,
   };
 }

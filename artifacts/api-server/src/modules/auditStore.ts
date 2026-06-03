@@ -61,6 +61,7 @@ export interface SystemLog {
 export interface WatchlistItem {
   id: string;
   pair: string;
+  symbol?: string;
   exchange: string;
   status: string;
   price: string;
@@ -68,6 +69,14 @@ export interface WatchlistItem {
   volume: string;
   trend: "up" | "down" | "neutral";
   score: number;
+}
+
+export interface RiskSettings {
+  maxExposure: number;
+  maxPositionSize: number;
+  maxDailyLoss: number;
+  enableKillSwitch: boolean;
+  allowedSymbols: string[];
 }
 
 const LOG_SOURCES = ["CoreEngine", "RiskGuardian", "MarketStream", "Exchange[Bitget]", "Exchange[BTCC]", "SignalScorer", "ExecutionRouter"];
@@ -103,6 +112,13 @@ class AuditStore {
   closedPositions: Position[] = [];
   watchlist: WatchlistItem[] = [];
   logs: SystemLog[] = [];
+  riskSettings: RiskSettings = {
+    maxExposure: 10000,
+    maxPositionSize: 2000,
+    maxDailyLoss: 500,
+    enableKillSwitch: false,
+    allowedSymbols: [],
+  };
   startTime = Date.now();
 
   constructor() {
