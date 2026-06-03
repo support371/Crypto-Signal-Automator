@@ -7,25 +7,23 @@ import { logger } from "./lib/logger";
 const app: Express = express();
 
 app.use(
-  pinoHttp(
-    {
-      logger,
-      serializers: {
-        req(req: Request) {
-          return {
-            id: req.id,
-            method: req.method,
-            url: req.url?.split("?")[0],
-          };
-        },
-        res(res: Response) {
-          return {
-            statusCode: res.statusCode,
-          };
-        },
+  pinoHttp({
+    logger,
+    serializers: {
+      req(req: Request) {
+        return {
+          id: req.id,
+          method: req.method,
+          url: req.url?.split("?")[0],
+        };
       },
-    }
-  )
+      res(res: Response) {
+        return {
+          statusCode: res.statusCode,
+        };
+      },
+    },
+  })
 );
 app.use(cors());
 app.use(express.json());
