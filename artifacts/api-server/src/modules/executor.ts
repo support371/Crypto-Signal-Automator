@@ -5,7 +5,12 @@ import { riskCheck } from "./guardian";
 
 export function startExecutor() {
   setInterval(() => {
-    const pending = auditStore.signals.filter((s) => s.status === "PENDING_RISK").slice(0, 1);
+    // Only process signals that are awaiting risk review and have an executable action.
+    // IGNORE signals are rejected by the scorer and never reach PENDING_RISK.
+    const pending = auditStore.signals
+      .filter((s) => s.status === "PENDING_RISK" && (s.action === "BUY" || s.action === "SELL"))
+      .slice(0, 2);
+
     for (const signal of pending) {
       const totalExposure = auditStore.activePositions.reduce((sum, p) => {
         return sum + parseFloat(p.currentPrice) * parseFloat(p.size);
@@ -15,6 +20,7 @@ export function startExecutor() {
 
       if (passed) {
         signal.status = "EXECUTED";
+
         const price = getCurrentPrice(signal.pair);
         const priceStr = price.toFixed(price < 0.01 ? 5 : 2);
         const amount = (500 / price).toFixed(2);
@@ -23,7 +29,7 @@ export function startExecutor() {
         auditStore.orders.unshift({
           id: orderId,
           pair: signal.pair,
-          side: signal.action === "SELL" ? "SELL" : "BUY",
+          side: signal.action as "BUY" | "SELL",
           type: "MARKET",
           price: priceStr,
           amount,
@@ -34,10 +40,18 @@ export function startExecutor() {
         });
         if (auditStore.orders.length > 100) auditStore.orders.pop();
 
-        auditStore.addLog("INFO", "ExecutionRouter", `Paper order filled: ${orderId} ${signal.pair} ${signal.action} @${priceStr}`);
+        auditStore.addLog(
+          "INFO",
+          "ExecutionRouter",
+          `Paper order filled: ${orderId} ${signal.pair} ${signal.action} @${priceStr}`,
+        );
       } else {
         signal.status = "REJECTED";
-        auditStore.addLog("WARN", "ExecutionRouter", `Order rejected for ${signal.pair}: ${reason}`);
+        auditStore.addLog(
+          "WARN",
+          "ExecutionRouter",
+          `Order rejected for ${signal.pair} ${signal.action}: ${reason}`,
+        );
       }
     }
   }, 15_000);
