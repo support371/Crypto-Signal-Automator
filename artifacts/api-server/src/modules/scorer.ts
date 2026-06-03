@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { auditStore, type Signal } from "./auditStore";
 import { getCurrentPrice } from "./listener";
+import { persistSignal } from "./dbRepository";
 
 const PAIRS = ["SOL/USDT", "ETH/USDT", "BTC/USDT", "AVAX/USDT", "MEME/USDT", "DOGE/USDT"] as const;
 const TYPES = ["MOMENTUM", "NEW_LISTING", "VOLATILITY"] as const;
@@ -15,7 +16,7 @@ function scoreSignal(): Signal {
   const price = getCurrentPrice(pair) || 100;
   const exchange = EXCHANGES[Math.floor(Math.random() * EXCHANGES.length)];
 
-  // Only scores >= threshold produce actionable BUY/SELL signals that go to PENDING_RISK.
+  // Only scores >= threshold produce actionable BUY/SELL signals queued for the executor.
   // Sub-threshold signals are immediately REJECTED with action IGNORE — executor never sees them.
   const actionable = score >= MIN_ACTIONABLE_SCORE;
   const action = actionable ? (Math.random() > 0.5 ? "BUY" : "SELL") : "IGNORE";
@@ -57,6 +58,18 @@ export function startScorer() {
     if (auditStore.signals.length > 50) auditStore.signals.pop();
 
     ageTimestamps();
+
+    // Persist to DB (best-effort — does not block the loop)
+    void persistSignal({
+      id: signal.id,
+      pair: signal.pair,
+      type: signal.type,
+      score: signal.score,
+      action: signal.action,
+      price: signal.price,
+      status: signal.status,
+      exchange: signal.exchange,
+    });
 
     auditStore.addLog(
       signal.status === "REJECTED" ? "WARN" : "INFO",
