@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Crypto Signal Bot"
+version = "1.0.0"
+id = "artifacts/crypto-signal-bot"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22242
+
+[services.development]
+run = "pnpm --filter @workspace/crypto-signal-bot run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/crypto-signal-bot", "run", "build" ]
+publicDir = "artifacts/crypto-signal-bot/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22242"
+BASE_PATH = "/"
