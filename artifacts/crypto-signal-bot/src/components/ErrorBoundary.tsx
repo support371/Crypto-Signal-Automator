@@ -39,6 +39,13 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  handleRetryWithDelay = () => {
+    // Retry with a slight delay to ensure state is properly reset
+    setTimeout(() => {
+      this.handleReset();
+    }, 100);
+  };
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
@@ -74,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={this.handleReset}>
+            <Button variant="outline" onClick={this.handleRetryWithDelay}>
               Try Again
             </Button>
             <Button onClick={this.handleReload}>

@@ -21,6 +21,10 @@ export function getCurrentPrice(pair: string): number {
   return currentPrices[pair] ?? 0;
 }
 
+let listenerErrorCount = 0;
+const LISTENER_MAX_ERRORS = 10;
+const LISTENER_RESET_THRESHOLD = 5; // Reset error count after successful operations
+
 export function startListener() {
   if (listenerInterval) {
     logger.warn("Listener already running");
@@ -54,12 +58,30 @@ export function startListener() {
         if (!newPrice) continue;
         item.price = newPrice.toFixed(newPrice < 0.01 ? 5 : 2);
       }
+
+      // Reset error count on successful operation
+      listenerErrorCount = Math.max(0, listenerErrorCount - 1);
     } catch (error) {
-      logger.error({ error }, "Error in listener tick");
-      auditStore.addLog("ERROR", "MarketStream", `Listener error: ${(error as Error).message}`);
+      listenerErrorCount++;
+      const errorMsg = (error as Error).message;
+
+      logger.error({ error, errorCount: listenerErrorCount }, "Error in listener tick");
+      auditStore.addLog("ERROR", "MarketStream", `Listener error: ${errorMsg}`);
+
+      // Circuit breaker: stop the listener if too many errors
+      if (listenerErrorCount >= LISTENER_MAX_ERRORS) {
+        logger.error({ errorCount: listenerErrorCount }, "Listener exceeded error threshold, stopping");
+        auditStore.addLog(
+          "ERROR",
+          "MarketStream",
+          `Listener stopped due to recurring errors (${listenerErrorCount} consecutive failures)`
+        );
+        stopListener();
+      }
     }
   }, 2000);
 
+  listenerErrorCount = 0;
   auditStore.addLog("INFO", "MarketStream", "Market data listener started — streaming 6 pairs from Bitget");
   logger.info("Listener module started");
 }

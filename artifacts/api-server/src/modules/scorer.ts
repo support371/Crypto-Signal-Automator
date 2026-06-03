@@ -10,6 +10,8 @@ const EXCHANGES = ["Bitget", "Bitget", "Bitget", "BTCC"] as const;
 
 const MIN_ACTIONABLE_SCORE = 70;
 let scorerInterval: NodeJS.Timeout | null = null;
+let scorerErrorCount = 0;
+const SCORER_MAX_ERRORS = 10;
 
 function scoreSignal(): Signal {
   const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
@@ -59,6 +61,8 @@ export function startScorer() {
     return;
   }
 
+  scorerErrorCount = 0;
+
   scorerInterval = setInterval(() => {
     try {
       const signal = scoreSignal();
@@ -81,6 +85,9 @@ export function startScorer() {
         logger.error({ error }, "Failed to persist signal");
       });
 
+      // Reset error count on successful operation
+      scorerErrorCount = Math.max(0, scorerErrorCount - 1);
+
       auditStore.addLog(
         signal.status === "REJECTED" ? "WARN" : "INFO",
         "SignalScorer",
@@ -89,8 +96,22 @@ export function startScorer() {
           : `Signal queued: ${signal.pair} ${signal.type} score=${signal.score} → ${signal.action} — awaiting risk check`,
       );
     } catch (error) {
-      logger.error({ error }, "Error in scorer tick");
-      auditStore.addLog("ERROR", "SignalScorer", `Scorer error: ${(error as Error).message}`);
+      scorerErrorCount++;
+      const errorMsg = (error as Error).message;
+
+      logger.error({ error, errorCount: scorerErrorCount }, "Error in scorer tick");
+      auditStore.addLog("ERROR", "SignalScorer", `Scorer error: ${errorMsg}`);
+
+      // Stop scorer if too many errors
+      if (scorerErrorCount >= SCORER_MAX_ERRORS) {
+        logger.error({ errorCount: scorerErrorCount }, "Scorer exceeded error threshold, stopping");
+        auditStore.addLog(
+          "ERROR",
+          "SignalScorer",
+          `Scorer stopped due to recurring errors (${scorerErrorCount} consecutive failures)`
+        );
+        stopScorer();
+      }
     }
   }, 30_000);
 

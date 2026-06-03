@@ -6,12 +6,16 @@ import { persistOrder } from "./dbRepository";
 import { logger } from "../lib/logger";
 
 let executorInterval: NodeJS.Timeout | null = null;
+let executorErrorCount = 0;
+const EXECUTOR_MAX_ERRORS = 10;
 
 export function startExecutor() {
   if (executorInterval) {
     logger.warn("Executor already running");
     return;
   }
+
+  executorErrorCount = 0;
 
   executorInterval = setInterval(() => {
     try {
@@ -73,9 +77,26 @@ export function startExecutor() {
           );
         }
       }
+
+      // Reset error count on successful operation
+      executorErrorCount = Math.max(0, executorErrorCount - 1);
     } catch (error) {
-      logger.error({ error }, "Error in executor tick");
-      auditStore.addLog("ERROR", "ExecutionRouter", `Executor error: ${(error as Error).message}`);
+      executorErrorCount++;
+      const errorMsg = (error as Error).message;
+
+      logger.error({ error, errorCount: executorErrorCount }, "Error in executor tick");
+      auditStore.addLog("ERROR", "ExecutionRouter", `Executor error: ${errorMsg}`);
+
+      // Stop executor if too many errors
+      if (executorErrorCount >= EXECUTOR_MAX_ERRORS) {
+        logger.error({ errorCount: executorErrorCount }, "Executor exceeded error threshold, stopping");
+        auditStore.addLog(
+          "ERROR",
+          "ExecutionRouter",
+          `Executor stopped due to recurring errors (${executorErrorCount} consecutive failures)`
+        );
+        stopExecutor();
+      }
     }
   }, 15_000);
 

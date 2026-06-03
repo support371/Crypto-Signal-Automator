@@ -11,6 +11,8 @@ const MAX_DAILY_DRAWDOWN_PCT = 5;
 const MIN_SCORE_THRESHOLD = 70;
 
 let guardianInterval: NodeJS.Timeout | null = null;
+let guardianErrorCount = 0;
+const GUARDIAN_MAX_ERRORS = 10;
 
 /** Parse a PnL string like "+$73.32" or "-$85.00" into a signed number. */
 function parsePnL(pnl: string): number {
@@ -38,6 +40,8 @@ export function startGuardian() {
     logger.warn("Guardian already running");
     return;
   }
+
+  guardianErrorCount = 0;
 
   guardianInterval = setInterval(() => {
     try {
@@ -81,9 +85,26 @@ export function startGuardian() {
           `Total exposure $${totalExposure.toFixed(0)} approaching limit of $${maxExposure}`,
         );
       }
+
+      // Reset error count on successful operation
+      guardianErrorCount = Math.max(0, guardianErrorCount - 1);
     } catch (error) {
-      logger.error({ error }, "Error in guardian tick");
-      auditStore.addLog("ERROR", "RiskGuardian", `Guardian error: ${(error as Error).message}`);
+      guardianErrorCount++;
+      const errorMsg = (error as Error).message;
+
+      logger.error({ error, errorCount: guardianErrorCount }, "Error in guardian tick");
+      auditStore.addLog("ERROR", "RiskGuardian", `Guardian error: ${errorMsg}`);
+
+      // Stop guardian if too many errors
+      if (guardianErrorCount >= GUARDIAN_MAX_ERRORS) {
+        logger.error({ errorCount: guardianErrorCount }, "Guardian exceeded error threshold, stopping");
+        auditStore.addLog(
+          "ERROR",
+          "RiskGuardian",
+          `Guardian stopped due to recurring errors (${guardianErrorCount} consecutive failures)`
+        );
+        stopGuardian();
+      }
     }
   }, 60_000);
 

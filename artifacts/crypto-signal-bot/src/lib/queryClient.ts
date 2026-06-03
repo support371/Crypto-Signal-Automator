@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { ApiError } from "./api";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -41,6 +42,16 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Exponential backoff retry strategy for transient failures
+function shouldRetry(failureCount: number, error: Error): boolean {
+  // Retry on network errors and 5xx server errors
+  if (error instanceof ApiError) {
+    return error.isRetryable && failureCount < 3;
+  }
+  // Retry on fetch/network errors
+  return failureCount < 3 && (error.message.includes("fetch") || error.message.includes("Network"));
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -48,10 +59,22 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
+      retry: shouldRetry,
+      retryDelay: (attemptIndex) => {
+        // Exponential backoff: 1s, 2s, 4s
+        return Math.min(1000 * Math.pow(2, attemptIndex), 10000);
+      },
     },
     mutations: {
-      retry: false,
+      retry: (failureCount) => shouldRetry(failureCount, new Error("Network request failed")),
+      retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
     },
+  },
+});
+
+// Global error handler for unhandled query errors
+queryClient.setDefaultOptions({
+  queries: {
+    ...queryClient.getDefaultOptions().queries,
   },
 });
