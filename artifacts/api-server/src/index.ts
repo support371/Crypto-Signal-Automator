@@ -5,14 +5,7 @@ import { startScorer } from "./modules/scorer";
 import { startGuardian } from "./modules/guardian";
 import { startExecutor } from "./modules/executor";
 
-const rawPort = process.env["PORT"];
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
+const rawPort = process.env["PORT"] || "3001";
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
